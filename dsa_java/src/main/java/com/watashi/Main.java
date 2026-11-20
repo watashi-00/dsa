@@ -1,7 +1,10 @@
 package com.watashi;
 
+import com.watashi.core.reflection.ClassScanner;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        ClassScanner scn = new ClassScanner();
+        scn.run();
     }
 }
