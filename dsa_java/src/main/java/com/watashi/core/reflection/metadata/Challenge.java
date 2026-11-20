@@ -1,4 +1,4 @@
-package com.watashi.core.reflection.annotations;
+package com.watashi.core.reflection.metadata;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
