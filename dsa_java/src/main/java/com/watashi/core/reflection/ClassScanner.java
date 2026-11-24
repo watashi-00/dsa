@@ -31,7 +31,7 @@ public class ClassScanner {
 
     public void findClass(String pkg, String baseDir) {
         try {
-            URL[] urls = new URL[]{new URL("file://" + baseDir)};
+            URL[] urls = new URL[]{new File(baseDir).toURI().toURL()};
             URLClassLoader loader = new URLClassLoader(urls);
             findClass(loader);
         } catch(MalformedURLException ex) {
