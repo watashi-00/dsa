@@ -21,24 +21,7 @@ public class ClassScanner {
     }
 
     public void findClass(String pkg) {
-        File dir = new File(pkg);
-        File[] files = dir.listFiles();
-
-        if (files == null) {
-            return;
-        }
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                findClass(file.getAbsolutePath());
-            } else if (file.getName().endsWith(".jar")) {
-                try {
-                    urls.add(file.toURI().toURL());
-                } catch (MalformedURLException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }
+        scan(new File(pkg), true);
     }
 
     public void findClass(String pkg, String baseDir) {
@@ -63,4 +46,35 @@ public class ClassScanner {
         throw new UnsupportedOperationException("Unimplemented method 'findClass'");
     }
 
+    private void addURL(File file) {
+        try {
+            urls.add(file.toURI().toURL());
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void scan(File dir, boolean addDirectory) {
+        if (!dir.isDirectory()) {
+            return;
+        }
+
+        if (addDirectory) {
+            addURL(dir);
+        }
+
+        File[] files = dir.listFiles();
+
+        if (files == null) {
+            return;
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                scan(file, false);
+            } else if (file.getName().endsWith(".jar")) {
+                addURL(file);
+            }
+        }
+    }
 }
