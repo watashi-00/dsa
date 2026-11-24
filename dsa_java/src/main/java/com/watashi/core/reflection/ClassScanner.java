@@ -16,7 +16,9 @@ import com.watashi.Main;
 
 public class ClassScanner {
     private static Logger logger;
+    private URLClassLoader loader;
     private final Set<URL> urls = new LinkedHashSet<>();
+    private final Set<Class<?>> classes = new LinkedHashSet<>();
 
     static {
         if(Main.debug && logger == null) {
@@ -46,7 +48,8 @@ public class ClassScanner {
                                 String className = file.toPath()
                                     .relativize(path)
                                     .toString()
-                                    .replace(File.separator, ".");
+                                    .replace("\\", "/")
+                                    .replace("/", ".");
                                 
                                 className = className.substring(
                                     0, className.length() - 6
@@ -118,6 +121,14 @@ public class ClassScanner {
     }
 
     private void loadClass(URLClassLoader loader, String className) {
+        
+        if (className.equals("module-info")
+                || className.endsWith(".module-info")
+                || className.equals("package-info")
+                || className.endsWith(".package-info")) {
+            return;
+        }
+
         try {
             loader.loadClass(className);
         } catch (ClassNotFoundException | LinkageError ex) {
@@ -127,8 +138,14 @@ public class ClassScanner {
         }
     }
 
+
+
     private void loadClasses() {
-        URLClassLoader loader = new URLClassLoader(
+        if (urls.isEmpty()) {
+            return;
+        }
+
+        loader = new URLClassLoader(
             urls.toArray(new URL[0]),
             getClass().getClassLoader()
         );
