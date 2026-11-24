@@ -87,6 +87,30 @@ public class ClassScanner {
         }
     }
 
+    public void findClass(Class<?> mainClass) {
+        try {
+            File location = new File(
+                mainClass.getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI()
+            );
+
+            if (location.isDirectory()) {
+                scan(location, true);
+            } else {
+                addURL(location);
+            }
+
+            loadClasses();
+
+        } catch (Exception ex) {
+            if (logger != null) {
+                logger.warning("Failed to locate class source: " + ex.getMessage());
+            }
+        }
+    }
+
     private void addURL(File file) {
         try {
             urls.add(file.toURI().toURL());
