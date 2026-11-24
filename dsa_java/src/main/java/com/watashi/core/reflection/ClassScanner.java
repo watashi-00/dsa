@@ -4,15 +4,15 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import com.watashi.Main;
 
 public class ClassScanner {
     private static Logger logger;
-    private final List<URL> urls = new ArrayList<>();
+    private final Set<URL> urls = new LinkedHashSet<>();
 
     static {
         if(Main.debug && logger == null) {
@@ -22,23 +22,12 @@ public class ClassScanner {
 
     public void findClass(String pkg) {
         scan(new File(pkg), true);
+        loadClasses();
     }
 
     public void findClass(String pkg, String baseDir) {
-        try {
-            File file = baseDir != null ? new File(baseDir) : new File(pkg);
-
-            URL[] urls = new URL[] {
-                    file.toURI().toURL()
-            };
-
-            URLClassLoader loader = new URLClassLoader(urls);
-
-            findClass(loader);
-
-        } catch (MalformedURLException ex) {
-            ex.printStackTrace();
-        }
+        addURL(new File(baseDir != null ? baseDir : pkg));
+        loadClasses();
     }
 
     private void findClass(URLClassLoader loader) {
@@ -76,5 +65,14 @@ public class ClassScanner {
                 addURL(file);
             }
         }
+    }
+
+    private void loadClasses() {
+        URLClassLoader loader = new URLClassLoader(
+            urls.toArray(new URL[0]),
+            getClass().getClassLoader()
+        );
+
+        findClass(loader);
     }
 }
