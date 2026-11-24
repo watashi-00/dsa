@@ -17,11 +17,12 @@ import com.watashi.Main;
 public class ClassScanner {
     private static Logger logger;
     private URLClassLoader loader;
+
     private final Set<URL> urls = new LinkedHashSet<>();
     private final Set<Class<?>> classes = new LinkedHashSet<>();
 
     static {
-        if(Main.debug && logger == null) {
+        if (Main.debug && logger == null) {
             logger = Logger.getLogger(ClassScanner.class.getName());
         }
     }
@@ -38,7 +39,7 @@ public class ClassScanner {
 
     private void findClass(URLClassLoader loader) {
         for (URL url : loader.getURLs()) {
-            try { 
+            try {
                 File file = new File(url.toURI());
 
                 if (file.isDirectory()) {
@@ -50,7 +51,7 @@ public class ClassScanner {
                                     .toString()
                                     .replace("\\", "/")
                                     .replace("/", ".");
-                                
+
                                 className = className.substring(
                                     0, className.length() - 6
                                 );
@@ -65,18 +66,16 @@ public class ClassScanner {
                         while (entries.hasMoreElements()) {
                             JarEntry entry = entries.nextElement();
 
-                            if (!entry.isDirectory() 
+                            if (!entry.isDirectory()
                                 && entry.getName().endsWith(".class")) {
-                                
+
                                 String className = entry.getName()
                                     .substring(0, entry.getName().length() - 6)
                                     .replace("/", ".");
 
                                 loadClass(loader, className);
                             }
-
                         }
-
                     }
                 }
 
@@ -121,7 +120,6 @@ public class ClassScanner {
     }
 
     private void loadClass(URLClassLoader loader, String className) {
-        
         if (className.equals("module-info")
                 || className.endsWith(".module-info")
                 || className.equals("package-info")
@@ -130,15 +128,13 @@ public class ClassScanner {
         }
 
         try {
-            loader.loadClass(className);
+            classes.add(loader.loadClass(className));
         } catch (ClassNotFoundException | LinkageError ex) {
             if (logger != null) {
                 logger.warning("Failed to load " + className + ": " + ex.getMessage());
             }
         }
     }
-
-
 
     private void loadClasses() {
         if (urls.isEmpty()) {
@@ -151,5 +147,9 @@ public class ClassScanner {
         );
 
         findClass(loader);
+    }
+
+    public Set<Class<?>> getClasses() {
+        return Set.copyOf(classes);
     }
 }
