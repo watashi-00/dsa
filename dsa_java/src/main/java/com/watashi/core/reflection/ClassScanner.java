@@ -4,8 +4,12 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 import com.watashi.Main;
@@ -31,8 +35,54 @@ public class ClassScanner {
     }
 
     private void findClass(URLClassLoader loader) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findClass'");
+        for (URL url : loader.getURLs()) {
+            try { 
+                File file = new File(url.toURI());
+
+                if (file.isDirectory()) {
+                    try (var paths = Files.walk(file.toPath())) {
+                        paths.filter(path -> path.toString().endsWith(".class"))
+                            .forEach(path -> {
+                                String className = file.toPath()
+                                    .relativize(path)
+                                    .toString()
+                                    .replace(File.separator, ".");
+                                
+                                className = className.substring(
+                                    0, className.length() - 6
+                                );
+
+                                loadClass(loader, className);
+                            });
+                    }
+                } else if (file.getName().endsWith(".jar")) {
+                    try (JarFile jar = new JarFile(file)) {
+                        Enumeration<JarEntry> entries = jar.entries();
+
+                        while (entries.hasMoreElements()) {
+                            JarEntry entry = entries.nextElement();
+
+                            if (!entry.isDirectory() 
+                                && entry.getName().endsWith(".class")) {
+                                
+                                String className = entry.getName()
+                                    .substring(0, entry.getName().length() - 6)
+                                    .replace("/", ".");
+
+                                loadClass(loader, className);
+                            }
+
+                        }
+
+                    }
+                }
+
+            } catch (Exception ex) {
+                if (logger != null) {
+                    logger.warning("Failed to scan " + url + ": " + ex.getMessage());
+                }
+            }
+        }
     }
 
     private void addURL(File file) {
@@ -63,6 +113,16 @@ public class ClassScanner {
                 scan(file, false);
             } else if (file.getName().endsWith(".jar")) {
                 addURL(file);
+            }
+        }
+    }
+
+    private void loadClass(URLClassLoader loader, String className) {
+        try {
+            loader.loadClass(className);
+        } catch (ClassNotFoundException | LinkageError ex) {
+            if (logger != null) {
+                logger.warning("Failed to load " + className + ": " + ex.getMessage());
             }
         }
     }
