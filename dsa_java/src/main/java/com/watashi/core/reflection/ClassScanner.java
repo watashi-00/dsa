@@ -21,9 +21,11 @@ public class ClassScanner {
         File dir = new File(pkg);
         File[] files = dir.listFiles();
         for (File file : files) {
-            if(file.isDirectory()) {
+            if (file.isDirectory()) {
                 findClass(file.getAbsolutePath());
-            } else {
+            } else if (file.getName().endsWith(".jar")) {
+                findClass(file.getAbsolutePath(), null);
+            } else if (file.getName().endsWith(".class")) {
                 findClass(file.getAbsolutePath(), dir.getAbsolutePath());
             }
         }
@@ -31,10 +33,17 @@ public class ClassScanner {
 
     public void findClass(String pkg, String baseDir) {
         try {
-            URL[] urls = new URL[]{new File(baseDir).toURI().toURL()};
+            File file = new File(pkg);
+
+            URL[] urls = new URL[] {
+                    file.toURI().toURL()
+            };
+
             URLClassLoader loader = new URLClassLoader(urls);
+
             findClass(loader);
-        } catch(MalformedURLException ex) {
+            
+        } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
     }
