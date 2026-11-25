@@ -13,19 +13,33 @@ import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Class scanner utility for discovering and loading classes from classpath locations.
+ * 
+ * @author watashi00
+ */
 public class ClassScanner {
     private static final Logger logger =
         Logger.getLogger(ClassScanner.class.getName());
 
+    /** URLClassLoader instance used for loading discovered classes. */
     private URLClassLoader loader;
 
+    /** Set of URLs representing classpath locations. */
     private final Set<URL> urls = new LinkedHashSet<>();
+
+    /** Set of loaded classes. */
     private final Set<Class<?>> classes = new LinkedHashSet<>();
 
     static {
         logger.setLevel(Level.INFO);
     }
 
+    /**
+     * Finds and loads classes from a package directory.
+     * 
+     * @param pkg the fully qualified name of the package to scan
+     */
     public void findClass(String pkg) {
         logger.info("Starting class discovery from: " + pkg);
 
@@ -33,6 +47,12 @@ public class ClassScanner {
         loadClasses();
     }
 
+    /**
+     * Finds and loads classes from a given location.
+     * 
+     * @param pkg the fully qualified name of the package
+     * @param baseDir optional base directory for scanning; uses pkg if null
+     */
     public void findClass(String pkg, String baseDir) {
         String location = baseDir != null ? baseDir : pkg;
 
@@ -42,6 +62,12 @@ public class ClassScanner {
         loadClasses();
     }
 
+    /**
+     * Finds and loads classes using the specified main class.
+     * Determines classpath locations from the main class's code source.
+     * 
+     * @param mainClass the main class to analyze
+     */
     public void findClass(Class<?> mainClass) {
         logger.info("Starting class discovery using: " + mainClass.getName());
 
@@ -70,6 +96,11 @@ public class ClassScanner {
         }
     }
 
+    /**
+     * Scans a URLClassLoader for classes.
+     * 
+     * @param loader the URLClassLoader to scan
+     */
     private void findClass(URLClassLoader loader) {
         logger.info("Scanning " + loader.getURLs().length + " classpath location(s)");
 
@@ -125,6 +156,11 @@ public class ClassScanner {
         }
     }
 
+    /**
+     * Adds a URL representing a classpath location.
+     * 
+     * @param file the File object representing the classpath entry
+     */
     private void addURL(File file) {
         try {
             URL url = file.toURI().toURL();
@@ -140,6 +176,12 @@ public class ClassScanner {
         }
     }
 
+    /**
+     * Recursively scans a directory for class files and jars.
+     * 
+     * @param dir the directory to scan
+     * @param addDirectory whether to add the directory itself as a URL
+     */
     private void scan(File dir, boolean addDirectory) {
         if (!dir.isDirectory()) {
             logger.warning("Directory does not exist or is not accessible: " + dir);
@@ -166,6 +208,13 @@ public class ClassScanner {
         }
     }
 
+    /**
+     * Loads a single class using the provided URLClassLoader.
+     * Skips module-info and package-info classes.
+     * 
+     * @param loader the URLClassLoader to use for loading
+     * @param className fully qualified name of the class to load
+     */
     private void loadClass(URLClassLoader loader, String className) {
         if (className.equals("module-info")
                 || className.endsWith(".module-info")
@@ -186,6 +235,9 @@ public class ClassScanner {
         }
     }
 
+    /**
+     * Initializes the URLClassLoader with registered URLs and discovers classes.
+     */
     private void loadClasses() {
         if (urls.isEmpty()) {
             logger.warning("No classpath locations available for scanning.");
@@ -210,6 +262,11 @@ public class ClassScanner {
         logger.info("Total registered classes: " + classes.size());
     }
 
+    /**
+     * Returns the set of all classes that have been discovered and loaded.
+     * 
+     * @return immutable set of loaded classes
+     */
     public Set<Class<?>> getClasses() {
         return Set.copyOf(classes);
     }
